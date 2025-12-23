@@ -24,8 +24,8 @@ namespace MalPaniApp.API.Controllers
                 return BadRequest(ModelState);
 
             var result = await _authService.RegisterAsync(registerDto);
-            if (result == null)
-                return BadRequest("User registration failed. Email might already be in use.");
+            if(!result.IsSuccess) 
+                return BadRequest(result);
 
             return Ok(result);
         }

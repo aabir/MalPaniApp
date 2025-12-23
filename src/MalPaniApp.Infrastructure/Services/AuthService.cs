@@ -26,7 +26,14 @@ namespace MalPaniApp.Infrastructure.Services
         {
             var existingUser = await _userManager.FindByEmailAsync(registerDto.Email);
             if (existingUser != null)
-                return null; // User already exists
+            {
+                return new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "User registration failed.",
+                    Errors = new List<string> { "Email is already registered." }
+                };
+            }
 
             var user = new ApplicationUser
             {
@@ -38,10 +45,18 @@ namespace MalPaniApp.Infrastructure.Services
             };
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
+            
             if (!result.Succeeded)
-                return null;
+            {
+                return new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "User registration failed.",
+                    Errors = result.Errors.Select(e => e.Description)
+                };
+            }
 
-            // Add default role (optional)
+            // Add default role
             await _userManager.AddToRoleAsync(user, "User");
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -49,6 +64,8 @@ namespace MalPaniApp.Infrastructure.Services
 
             return new AuthResponseDto
             {
+                IsSuccess = true,
+                Message = "User registered successfully.",
                 Token = token,
                 Email = user.Email!,
                 FirstName = user.FirstName!,
